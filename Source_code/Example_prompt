@@ -1,0 +1,34 @@
+import { Button } from "@/components/ui/button";
+
+interface ExamplePromptsProps {
+  onSelectPrompt: (prompt: string) => void;
+}
+
+const EXAMPLE_PROMPTS = [
+  "Analyze the sentiment of customer reviews",
+  "Summarize this research paper",
+  "Generate product descriptions from features",
+  "Extract key entities from this text",
+  "Translate technical documentation",
+  "Create chatbot responses for FAQ"
+];
+
+export const ExamplePrompts = ({ onSelectPrompt }: ExamplePromptsProps) => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Try these examples:</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {EXAMPLE_PROMPTS.map((prompt, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            onClick={() => onSelectPrompt(prompt)}
+            className="text-left h-auto p-4 bg-gradient-card border-border hover:bg-gradient-card hover:border-primary/50 transition-all"
+          >
+            <span className="text-sm text-foreground">{prompt}</span>
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+};
