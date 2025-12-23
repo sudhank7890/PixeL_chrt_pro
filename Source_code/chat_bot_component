@@ -1,0 +1,144 @@
+import { useState, useRef, useEffect } from "react";
+import { ChatMessage } from "./ChatMessage";
+import { ChatInput } from "./ChatInput";
+import { ExamplePrompts } from "./ExamplePrompts";
+import { ChatHeader } from "./ChatHeader";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
+
+interface Message {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+}
+
+export const ChatBot = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const simulateNLPResponse = async (userMessage: string): Promise<string> => {
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    
+    // Simple response simulation based on keywords
+    const lowerMessage = userMessage.toLowerCase();
+    
+    if (lowerMessage.includes('sentiment')) {
+      return "Based on sentiment analysis, I can help you classify text as positive, negative, or neutral. I use advanced transformer models to understand context and emotional nuances in text.";
+    }
+    
+    if (lowerMessage.includes('summarize') || lowerMessage.includes('summary')) {
+      return "I can extract key information and create concise summaries from longer texts. My extractive and abstractive summarization capabilities help you quickly understand main points and themes.";
+    }
+    
+    if (lowerMessage.includes('translate')) {
+      return "I support multi-language translation with context awareness. I can handle technical, business, and conversational text while maintaining meaning and tone across different languages.";
+    }
+    
+    if (lowerMessage.includes('entity') || lowerMessage.includes('extract')) {
+      return "Named Entity Recognition (NER) allows me to identify and classify entities like people, organizations, locations, dates, and custom entities from unstructured text data.";
+    }
+    
+    if (lowerMessage.includes('generate') || lowerMessage.includes('create')) {
+      return "I can generate human-like text for various use cases including product descriptions, marketing copy, technical documentation, and creative content while maintaining consistency and quality.";
+    }
+    
+    return "I understand your request and can help with various NLP tasks including text analysis, generation, translation, and more. Could you provide more specific details about what you'd like to accomplish?";
+  };
+
+  const handleSendMessage = async (messageText: string) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: messageText,
+      isUser: true,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const response = await simulateNLPResponse(messageText);
+      
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        isUser: false,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process your message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-background">
+      <div className="container mx-auto max-w-4xl px-4 py-6">
+        {messages.length === 0 ? (
+          <div className="space-y-8">
+            <ChatHeader />
+            <ExamplePrompts onSelectPrompt={handleSendMessage} />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <ChatHeader />
+            <ScrollArea ref={scrollAreaRef} className="h-[60vh] pr-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={message.text}
+                    isUser={message.isUser}
+                    timestamp={message.timestamp}
+                  />
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-card text-card-foreground max-w-[80%] mr-12 px-4 py-3 rounded-2xl rounded-bl-md border border-border">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-100"></div>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-200"></div>
+                        </div>
+                        <span className="text-sm text-muted-foreground">Processing...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+        
+        <div className="mt-6">
+          <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+        </div>
+      </div>
+    </div>
+  );
+};
